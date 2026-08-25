@@ -8,30 +8,41 @@ Permette di:
 - Aprire o chiudere una porta a distanza
 - Ricevere notifiche in tempo reale quando lo stato di una porta cambia (Observe)
 - Consultare lo storico di tutte le azioni effettuate (apertura/chiusura, con data e ora)
+- Leggere i sensori di casa (presenza, temperatura, umidità)
+
+Tutti i dati di telemetria viaggiano in formato **SenML+JSON**.
 
 ---
 
 ## Struttura del progetto
 
 ```
-smart_lock_IoT/
-├── server.py                              # Avvia il server CoAP
-├── client/
-│   ├── coap_get_client_process.py         # Legge stato + storico di una porta
-│   ├── coap_post_client_process.py        # Apertura rapida (comando semplice)
-│   ├── coap_put_client_process.py         # Apri/chiudi a scelta (apri | chiudi)
-│   └── coap_observing_client_process.py   # Ascolto in tempo reale (Observe)
+Smart_Lock/
+├── server.py                     # Avvia il server CoAP e registra i 3 Smart Object
+├── client.py                     # Unico client: get / post / put / observe / dashboard
 ├── model/
-│   ├── lock_state.py                      # Stato di una serratura (aperta/chiusa)
-│   └── lock_history.py                    # Storico delle azioni effettuate
+│   ├── lock.py                   # Una serratura: stato (aperta/chiusa) + storico azioni
+│   ├── sensors.py                # Sensori simulati: presenza, temperatura, umidità
+│   └── senml.py                  # Creazione e lettura dei pacchetti SenML+JSON
 ├── request/
-│   └── lock_command_request.py            # Descrive il comando apri/chiudi
+│   └── lock_command_request.py   # Il comando apri/chiudi (scrittura e lettura)
 ├── resources/
-│   ├── main_door_resource.py              # Risorsa CoAP: porta principale
-│   └── garage_door_resource.py            # Risorsa CoAP: garage
+│   ├── door_resource.py          # Risorsa CoAP di una porta (usata per main e garage)
+│   └── sensor_resource.py        # Risorsa CoAP dei sensori (solo GET)
 ├── requirements.txt
 └── README.md
 ```
+
+I tre Smart Object del sistema sono:
+
+| Risorsa CoAP           | Cosa rappresenta       | Metodi supportati        |
+|------------------------|------------------------|--------------------------|
+| `/main_door`           | Porta principale       | GET, POST, PUT, Observe  |
+| `/garage_door`         | Garage                 | GET, POST, PUT, Observe  |
+| `/environment_sensor`  | Sensori di casa        | GET                      |
+
+Le due porte usano **la stessa classe** (`DoorResource`), creata due volte con un nome diverso:
+per aggiungere una terza serratura basta aggiungere una riga al dizionario `PORTE` in `server.py`.
 
 ---
 
@@ -70,28 +81,28 @@ Dalla cartella principale del progetto:
 python3 server.py
 ```
 
-Il server si mette in ascolto su `coap://127.0.0.1:5683` ed espone due risorse:
-- `/main_door` — porta principale
-- `/garage_door` — garage
-
-Lascia il server acceso in questo terminale mentre usi i client da un altro terminale.
+Il server si mette in ascolto su `coap://127.0.0.1:5683`.
+Lascia il server acceso in questo terminale mentre usi il client da un altro terminale.
 
 ---
 
-## Utilizzo dei client
+## Utilizzo del client
 
 Aprire un secondo terminale, attivare il venv e lanciare i comandi (sempre dalla cartella principale):
 
 | Comando | Descrizione |
 |---|---|
-| `python3 -m client.coap_get_client_process` | Legge lo stato attuale e lo storico della porta principale |
-| `python3 -m client.coap_post_client_process` | Apre subito la porta (comando rapido) |
-| `python3 -m client.coap_put_client_process apri` | Apre la porta |
-| `python3 -m client.coap_put_client_process chiudi` | Chiude la porta |
-| `python3 -m client.coap_observing_client_process` | Resta in ascolto e avvisa in tempo reale se lo stato cambia |
+| `python3 client.py get main` | Stato attuale e storico della porta principale |
+| `python3 client.py get garage` | Stato attuale e storico del garage |
+| `python3 client.py get sensori` | Presenza, temperatura e umidità |
+| `python3 client.py post main` | Apre subito la porta (comando rapido) |
+| `python3 client.py put main apri` | Apre la porta principale |
+| `python3 client.py put garage chiudi` | Chiude il garage |
+| `python3 client.py observe garage` | Resta in ascolto e avvisa in tempo reale se lo stato cambia |
+| `python3 client.py dashboard` | Tabella riassuntiva con tutti e 3 gli Smart Object |
 
-Per default i client puntano alla porta principale (`/main_door`). Per usare il garage, modificare
-la variabile `uri` in cima al file scelto, sostituendo `/main_door` con `/garage_door`.
+La porta si scrive dopo il comando (`main` o `garage`); se non viene scritta niente viene usata
+`main` come default. Lo stesso vale per l'azione del `put` (default: `apri`).
 
 ---
 
@@ -107,6 +118,6 @@ automatiche quando una risorsa cambia stato, senza dover interrogare continuamen
 
 ## Possibili estensioni future
 
-- Supporto a un numero arbitrario di serrature (n porte), aggiungendo nuove risorse nel server
+- Supporto a un numero arbitrario di serrature (n porte), aggiungendo righe al dizionario `PORTE`
 - Autenticazione (PIN o token) per l'apertura da remoto
-- Interfaccia grafica (app mobile o web) al posto dei client da terminale# Smart_Lock
+- Interfaccia grafica (app mobile o web) al posto del client da terminale
