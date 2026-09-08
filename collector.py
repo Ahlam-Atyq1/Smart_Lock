@@ -25,8 +25,8 @@ from datetime import datetime
 
 from aiocoap import Context, Message, GET, PUT
 
-from model.senml import estrai_valore, valore_di
-from request.lock_command_request import LockCommandRequest
+from senml import estrai_valore, valore_di
+from model import LockCommandRequest
 
 SERVER = "coap://127.0.0.1:5683"
 
@@ -277,8 +277,12 @@ async def main():
         # Il collector resta acceso finche' la console non riceve "esci"
         await console_comandi(collector, protocollo)
     finally:
+        # Prima fermiamo i lavori in corso e aspettiamo che siano davvero
+        # chiusi, poi spegniamo la connessione CoAP: altrimenti aiocoap
+        # protesta perche' ci sono ancora richieste Observe aperte.
         for lavoro in lavori:
             lavoro.cancel()
+        await asyncio.gather(*lavori, return_exceptions=True)
         await protocollo.shutdown()
         print("Collector fermato.")
 

@@ -1,22 +1,11 @@
-# client.py
-# Unico client CoAP del progetto: prima erano 6 script quasi identici,
-# adesso c'e' un solo comando con cinque azioni possibili.
-#
-# Uso (dalla cartella principale, con il server acceso):
-#   python3 client.py get [main|garage|sensori]      stato + storico (o lettura sensori)
-#   python3 client.py post [main|garage]             apertura rapida
-#   python3 client.py put  [main|garage] [apri|chiudi]
-#   python3 client.py observe [main|garage]          ascolto in tempo reale
-#   python3 client.py dashboard                      tabella con tutti gli Smart Object
-
 import asyncio
 import json
 import sys
 
 from aiocoap import Context, Message, GET, POST, PUT
 
-from model.senml import estrai_valore, formatta_pacchetto
-from request.lock_command_request import LockCommandRequest
+from senml import estrai_valore, formatta_pacchetto
+from model import LockCommandRequest
 
 SERVER = "coap://127.0.0.1:5683"
 
@@ -28,12 +17,6 @@ RISORSE = {
 }
 
 PORTE = ("main", "garage")
-
-
-# ---------------------------------------------------------------------------
-# Lettura di cio' che l'utente scrive da terminale
-# ---------------------------------------------------------------------------
-
 def leggi_argomento(posizione, ammessi, default):
     # sys.argv[0] e' "client.py", sys.argv[1] e' il comando (get, put, ...),
     # quindi gli argomenti veri e propri partono da sys.argv[2].

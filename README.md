@@ -18,23 +18,23 @@ Tutti i dati di telemetria viaggiano in formato **SenML+JSON**.
 
 ```
 Smart_Lock/
-├── server.py                     # Avvia il server CoAP e registra i 3 Smart Object
-├── collector.py                  # Data Collector & Manager: GET periodici, Observe, storico
-├── client.py                     # Unico client: get / post / put / observe / dashboard
-├── model/
-│   ├── lock.py                   # Una serratura: stato (aperta/chiusa) + storico azioni
-│   ├── sensors.py                # Sensori simulati: presenza, temperatura, umidità
-│   └── senml.py                  # Creazione e lettura dei pacchetti SenML+JSON
-├── request/
-│   └── lock_command_request.py   # Il comando apri/chiudi (scrittura e lettura)
-├── resources/
-│   ├── door_resource.py          # Risorsa CoAP di una porta (usata per main e garage)
-│   └── sensor_resource.py        # Risorsa CoAP dei sensori (solo GET)
+├── server.py          # Server CoAP: registra i 3 Smart Object e le loro risorse
+│                      #   DoorResource   -> una porta (GET, POST, PUT, Observe)
+│                      #   SensorResource -> i sensori di casa (solo GET)
+├── collector.py       # Data Collector & Manager: GET periodici, Observe, storico
+├── client.py          # Unico client: get / post / put / observe / dashboard
+├── model.py           # Gli oggetti del sistema, senza dettagli di rete:
+│                      #   Lock (stato + storico), EnvironmentSensor, LockCommandRequest
+├── senml.py           # Creazione e lettura dei pacchetti SenML+JSON
+├── test_progetto.py   # Test automatici (modelli, sensori, SenML, collector, server CoAP)
 ├── requirements.txt
-├── storico.json                  # Creato dal collector: storico delle azioni raccolte
-├── test_progetto.py              # Test automatici (modelli, sensori, SenML, server CoAP)
+├── storico.json       # Creato dal collector: storico delle azioni raccolte
 └── README.md
 ```
+
+Il progetto è volutamente compatto: **5 file di codice**, divisi per ruolo.
+`model.py` e `senml.py` non sanno niente di CoAP (sono i dati e il formato dei messaggi),
+`server.py` è il lato dispositivo, `client.py` e `collector.py` il lato utente.
 
 I tre Smart Object del sistema sono:
 

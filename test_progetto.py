@@ -23,12 +23,9 @@ from aiocoap import Context, Message, GET, POST, PUT
 
 import collector
 from collector import DataCollector
-from model.lock import Lock
-from model.senml import crea_pacchetto_senml, estrai_valore, formatta_pacchetto
-from model.sensors import EnvironmentSensor
-from request.lock_command_request import LockCommandRequest
-from resources.door_resource import DoorResource
-from resources.sensor_resource import SensorResource
+from model import EnvironmentSensor, Lock, LockCommandRequest
+from senml import crea_pacchetto_senml, estrai_valore, formatta_pacchetto
+from server import DoorResource, SensorResource
 
 # Porta diversa da quella del server vero (5683), cosi' i test si possono
 # lanciare anche mentre il server normale e' acceso
